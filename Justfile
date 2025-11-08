@@ -48,8 +48,8 @@ go:
         --maxzoom 22 \
         --pmtiles-metadata "license={{ license }}" \
         --pmtiles-metadata "oin_id={{ oin_id }}" \
-        --co QUALITY=75 \
-        --co LOSSLESS=NO
+        --co QUALITY=75
+    
     
     echo ""
     echo "=== Conversion complete! ==="
