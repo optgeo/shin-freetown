@@ -13,7 +13,7 @@ shin-freetown is a streamlined GeoTIFF to PMTiles converter, specifically design
 
 ### 2. Environment Variable Configuration
 - All configurable parameters use environment variables with sensible defaults
-- Variables include: `SOURCE_URL`, `OUTPUT_PATH`, `TMP_DIR`, `TITLE`, `ATTRIBUTION`, `LICENSE`, `DESCRIPTION`, `OIN_ID`
+- Variables include: `SOURCE_URL`, `OUTPUT_PATH`, `TITLE`, `ATTRIBUTION`, `LICENSE`, `DESCRIPTION`, `OIN_ID`
 - Use `env_var_or_default()` in Justfile for default values
 
 ### 3. Remote File Access
@@ -21,12 +21,7 @@ shin-freetown is a streamlined GeoTIFF to PMTiles converter, specifically design
 - No local download required - streaming access only
 - Critical for working with large (9.82GB+) imagery files
 
-### 4. Temporary Directory Management
-- Configurable `TMP_DIR` (default: `./tmp`)
-- Important for systems with limited system storage
-- Users can point to external drives or larger partitions
-
-### 5. Metadata Handling
+### 4. Metadata Handling
 - OpenAerialMap metadata cannot be automatically retrieved
 - All metadata configured via environment variables
 - Metadata mapping:
@@ -71,7 +66,7 @@ rio pmtiles \
 - **Resolution**: 4cm
 - **Date**: 2025-04-16
 - **Size**: 9.82GB
-- **OIN ID**: 68beefef128fd7aac0cd73ec
+- **OIN ID**: 68bed3070dea6f775adb9b06
 
 ## Important Considerations
 
@@ -104,5 +99,4 @@ rio pmtiles \
 - Maintain environment variable configurability
 - Preserve metadata mapping documentation in README.md
 - Ensure all text is in English
-- Test with configurable TMP_DIR for limited storage scenarios
 - Never remove license information from outputs

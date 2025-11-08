@@ -7,7 +7,6 @@ A streamlined tool to convert GeoTIFF imagery from OpenAerialMap to lossy WebP P
 - Convert remote GeoTIFF to PMTiles using `/vsicurl` (no local download required)
 - Generate lossy WebP format for efficient web delivery
 - Preserve metadata including attribution and licensing information
-- Configurable temporary directory for systems with limited storage
 - Simple task-based workflow using Justfile
 
 ## Prerequisites
@@ -53,9 +52,6 @@ SOURCE_URL="https://example.com/image.tif" \
 OUTPUT_PATH="my_output.pmtiles" \
 just go
 
-# Custom temporary directory (useful for limited storage)
-TMP_DIR="/mnt/large-disk/tmp" just go
-
 # Full metadata customization
 TITLE="My Image" \
 ATTRIBUTION="My Organization (Jane Doe)" \
@@ -69,14 +65,13 @@ just go
 - `just` or `just --list` - Show all available tasks
 - `just go` - Run the GeoTIFF to PMTiles conversion
 - `just config` - Display current configuration
-- `just clean` - Remove temporary files
-- `just clean-all` - Remove temporary files and output
+- `just clean` - Remove output files
 
 ## Default Dataset
 
 By default, this tool processes aerial imagery of Freetown, Sierra Leone:
 
-- **Source**: [OpenAerialMap](https://map.openaerialmap.org/#/68beefef128fd7aac0cd73ec)
+- **Source**: [OpenAerialMap](https://map.openaerialmap.org/#/68bed3070dea6f775adb9b06)
 - **Title**: Freetown_Main_body
 - **Uploaded by**: Ivan Gayton
 - **Date**: 2025-04-16
@@ -87,7 +82,7 @@ By default, this tool processes aerial imagery of Freetown, Sierra Leone:
 - **Image Size**: 9.82GB
 - **Type**: Image + Map Layer
 - **License**: CC BY-SA 4.0
-- **OIN ID**: 68beefef128fd7aac0cd73ec
+- **OIN ID**: 68bed3070dea6f775adb9b06
 
 ## Metadata Mapping
 
@@ -114,12 +109,11 @@ The following table shows how OpenAerialMap metadata maps to PMTiles metadata:
 |----------|---------|-------------|
 | `SOURCE_URL` | Freetown imagery URL | Source GeoTIFF URL (accessed via /vsicurl) |
 | `OUTPUT_PATH` | `freetown_main_body.pmtiles` | Output PMTiles file path |
-| `TMP_DIR` | `./tmp` | Temporary directory for processing |
 | `TITLE` | `Freetown_Main_body` | Tileset title |
 | `ATTRIBUTION` | `HOT (Ivan Gayton)` | Attribution text for map display |
 | `LICENSE` | `CC BY-SA 4.0` | License identifier |
 | `DESCRIPTION` | (Full technical details) | Detailed description of the imagery |
-| `OIN_ID` | `68beefef128fd7aac0cd73ec` | OpenAerialMap unique identifier |
+| `OIN_ID` | `68bed3070dea6f775adb9b06` | OpenAerialMap unique identifier |
 
 ## Technical Details
 
@@ -138,14 +132,6 @@ The tool uses GDAL's `/vsicurl` virtual file system to access remote GeoTIFF fil
 - Saves local disk space
 - Reduces processing time
 - Works seamlessly with rio-pmtiles
-
-### Storage Considerations
-
-For systems with limited storage, set `TMP_DIR` to a location with more space:
-
-```bash
-TMP_DIR="/mnt/external-drive/tmp" just go
-```
 
 ## License
 
