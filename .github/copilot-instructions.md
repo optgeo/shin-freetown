@@ -40,6 +40,7 @@ rio pmtiles \
     "OUTPUT_PATH" \
     --encoding webp \
     --resampling bilinear \
+    --add-alpha \
     --title "TITLE" \
     --attribution "ATTRIBUTION" \
     --description "DESCRIPTION" \
@@ -47,15 +48,15 @@ rio pmtiles \
     --maxzoom 22 \
     --pmtiles-metadata "license=LICENSE" \
     --pmtiles-metadata "oin_id=OIN_ID" \
-    --co QUALITY=75 \
-    --co LOSSLESS=NO
+    --co QUALITY=75
 ```
 
 ### Key Parameters
 - **Encoding**: WebP for efficient lossy compression
 - **Quality**: 75 (balance between size and quality)
 - **Zoom levels**: 10-22 (appropriate for 4cm resolution)
-- **Lossless**: Disabled for smaller output files
+- **Alpha channel**: Enabled (--add-alpha) to convert NODATA pixels to transparent pixels
+- **NODATA handling**: Prevents black NODATA blocks by using transparency
 
 ## Default Dataset (Freetown)
 

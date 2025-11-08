@@ -36,6 +36,7 @@ go:
         "{{ output_path }}" \
         --encoding webp \
         --resampling bilinear \
+        --add-alpha \
         --title "{{ title }}" \
         --attribution "{{ attribution }}" \
         --description "{{ description }}" \

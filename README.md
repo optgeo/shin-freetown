@@ -122,9 +122,17 @@ The following table shows how OpenAerialMap metadata maps to PMTiles metadata:
 - **Encoding**: WebP (lossy compression)
 - **Quality**: 75 (good balance of size and quality)
 - **Resampling**: Bilinear
+- **Alpha Channel**: Enabled (converts NODATA to transparent pixels)
 - **Min Zoom**: 10
 - **Max Zoom**: 22
-- **Lossless**: Disabled (for smaller file sizes)
+
+### NODATA Handling
+
+The conversion uses the `--add-alpha` flag to properly handle NODATA values in the source imagery. This ensures:
+- NODATA pixels are converted to transparent pixels
+- No black NODATA blocks in the output
+- Proper transparency support in WebP format
+- Clean tile boundaries without artifacts
 
 ### Why /vsicurl?
 
