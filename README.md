@@ -96,7 +96,7 @@ The following table shows how OpenAerialMap metadata maps to PMTiles metadata:
 | OpenAerialMap Field | Environment Variable | PMTiles Field | Usage |
 |---------------------|---------------------|---------------|-------|
 | title | `TITLE` | `--title` | Main tile title |
-| uploaded by / provider | `ATTRIBUTION` | `--attribution` | "HOT (Ivan Gayton)" - Displayed in map attribution |
+| provider (uploaded by) | `ATTRIBUTION` | `--attribution` | "HOT (Ivan Gayton)" - Displayed in map attribution |
 | license | `LICENSE` | `--pmtiles-metadata "license=..."` | "CC BY-SA 4.0" - Critical licensing information |
 | date / resolution / platform / sensor | `DESCRIPTION` | `--description` | Combined technical details |
 | id | `OIN_ID` | `--pmtiles-metadata "oin_id=..."` | OpenAerialMap reference (for advanced use) |
