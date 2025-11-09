@@ -71,7 +71,7 @@ just go
 
 By default, this tool processes aerial imagery of Freetown, Sierra Leone:
 
-- **Source**: [OpenAerialMap](https://map.openaerialmap.org/#/68bed3070dea6f775adb9b06)
+- **Source**: [OpenAerialMap](https://map.openaerialmap.org/#/-13.252730369567871,8.469316086049092,14/square/0333211232230201/69075f1de47603686de24fe8?_k=h4j55o)
 - **Title**: Freetown_Main_body
 - **Uploaded by**: Ivan Gayton
 - **Date**: 2025-04-16
