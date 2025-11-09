@@ -186,6 +186,8 @@ print('wrote', dst)
 PY
 ```
 
+Note: The repository's `add-alpha` task now runs `gdalwarp` with `-srcnodata "0 0 0"` by default, so pure-black pixels are converted to transparent automatically. If your source uses near-black values as background (not exact 0,0,0), use the `rasterio` threshold example above for more robust handling.
+
 4. Convert the prepared alpha-enabled TIFF to PMTiles using the `shin-freetown` recommended parameters (example):
 
 ```bash

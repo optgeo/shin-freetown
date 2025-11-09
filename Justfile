@@ -12,7 +12,7 @@ attribution := env_var_or_default('ATTRIBUTION', 'DroneTM (Ivan Gayton; CC-BY 4.
 license := env_var_or_default('LICENSE', 'CC-BY 4.0')
 description := env_var_or_default('DESCRIPTION', 'Aerial imagery of Freetown at 4cm resolution, uploaded by Ivan Gayton, captured 2025-10-22. Provider: DroneTM, Platform: UAV, Sensor: DJI Mini 4 Pro')
 oin_id := env_var_or_default('OIN_ID', '69075f1de47603686de24fe8')
-zoom_range := env_var_or_default('ZOOM_RANGE', '10..21')
+zoom_range := env_var_or_default('ZOOM_RANGE', '11..21')
 # Runtime / performance defaults (can be overridden via environment variables)
 omp_threads := env_var_or_default('OMP_NUM_THREADS', '1')
 # GDAL cache in MB; set conservatively higher for very large imagery if RAM allows
@@ -255,7 +255,8 @@ add-alpha:
     export CPL_DEBUG=${CPL_DEBUG:-ON}
 
     # run gdalwarp with --debug so internal messages and progress go to stderr
-    gdalwarp --debug ON -dstalpha \
+    # Treat pure-black pixels as source nodata so they become transparent in the alpha band
+    gdalwarp --debug ON -srcnodata "0 0 0" -dstalpha \
         -co BIGTIFF=YES -co TILED=YES -co COMPRESS=DEFLATE -co PREDICTOR=2 \
         "$SRC" "$DST"
 
