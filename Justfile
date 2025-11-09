@@ -249,7 +249,11 @@ add-alpha:
     fi
 
     # Create alpha-enabled TIFF using gdalwarp -dstalpha
-    gdalwarp -dstalpha -co COMPRESS=DEFLATE "$SRC" "$DST"
+    # Use BIGTIFF=YES for very large source files to avoid "Maximum TIFF file size exceeded" errors.
+    # Enable tiling for better IO and set a conservative compressor.
+    gdalwarp -dstalpha \
+        -co BIGTIFF=YES -co TILED=YES -co COMPRESS=DEFLATE -co PREDICTOR=2 \
+        "$SRC" "$DST"
 
     echo "add-alpha complete: $DST"
 
