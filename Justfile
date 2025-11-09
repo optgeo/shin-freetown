@@ -24,7 +24,7 @@ rio_jobs := env_var_or_default('RIO_JOBS', '1')
 tile_format := env_var_or_default('TILE_FORMAT', 'WEBP')
 tile_size := env_var_or_default('TILE_SIZE', '512')
 resampling := env_var_or_default('RESAMPLING', 'bilinear')
-// Default output quality for WebP (conservative default to reduce size)
+# Default output quality for WebP (conservative default to reduce size)
 quality := env_var_or_default('QUALITY', '65')
 
 # Default recipe - show help
@@ -251,7 +251,11 @@ add-alpha:
     # Create alpha-enabled TIFF using gdalwarp -dstalpha
     # Use BIGTIFF=YES for very large source files to avoid "Maximum TIFF file size exceeded" errors.
     # Enable tiling for better IO and set a conservative compressor.
-    gdalwarp -dstalpha \
+    # Enable GDAL debug output on stderr by default; users can override CPL_DEBUG in their environment.
+    export CPL_DEBUG=${CPL_DEBUG:-ON}
+
+    # run gdalwarp with --debug so internal messages and progress go to stderr
+    gdalwarp --debug ON -dstalpha \
         -co BIGTIFF=YES -co TILED=YES -co COMPRESS=DEFLATE -co PREDICTOR=2 \
         "$SRC" "$DST"
 
