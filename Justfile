@@ -15,14 +15,17 @@ oin_id := env_var_or_default('OIN_ID', '69075f1de47603686de24fe8')
 zoom_range := env_var_or_default('ZOOM_RANGE', '10..21')
 # Runtime / performance defaults (can be overridden via environment variables)
 omp_threads := env_var_or_default('OMP_NUM_THREADS', '1')
-gdal_cachemax := env_var_or_default('GDAL_CACHEMAX', '1024')
+# GDAL cache in MB; set conservatively higher for very large imagery if RAM allows
+gdal_cachemax := env_var_or_default('GDAL_CACHEMAX', '2048')
+# Number of rio worker processes (keep conservative default to avoid OOM)
 rio_jobs := env_var_or_default('RIO_JOBS', '1')
 
 # Tile generation defaults
 tile_format := env_var_or_default('TILE_FORMAT', 'WEBP')
 tile_size := env_var_or_default('TILE_SIZE', '512')
 resampling := env_var_or_default('RESAMPLING', 'bilinear')
-quality := env_var_or_default('QUALITY', '75')
+// Default output quality for WebP (conservative default to reduce size)
+quality := env_var_or_default('QUALITY', '65')
 
 # Default recipe - show help
 default:
