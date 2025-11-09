@@ -128,11 +128,57 @@ The following table shows how OpenAerialMap metadata maps to PMTiles metadata:
 
 ### NODATA Handling
 
-The conversion uses the `--add-alpha` flag to properly handle NODATA values in the source imagery. This ensures:
-- NODATA pixels are converted to transparent pixels
-- No black NODATA blocks in the output
-- Proper transparency support in WebP format
-- Clean tile boundaries without artifacts
+NODATA in aerial imagery can be expressed in several ways (explicit NODATA value, dataset mask, or pixels with RGB == 0). If NODATA is not handled explicitly, it commonly appears as black pixels in generated tiles. The recommended, tested workflow used in this repository is:
+
+1. Inspect the source TIFF for NODATA or a dataset mask:
+
+```bash
+gdalinfo source.tif
+```
+
+2. If the dataset has a dataset mask (Mask Flags: PER_DATASET) or NODATA is unspecified but black pixels indicate background, create an explicit alpha band from the mask:
+
+```bash
+# create alpha from dataset mask
+gdalwarp -dstalpha source.tif source_alpha.tif
+```
+
+3. If the image uses black RGB (0,0,0) pixels to indicate background, convert those pixels to fully transparent by setting alpha=0 where R=G=B=0. Example (uses the `rasterio` Python package available in the `shin-freetown` environment):
+
+```bash
+/Users/hfu/.local/share/mamba/envs/shin-freetown/bin/python - <<'PY'
+import rasterio, numpy as np
+src='source_alpha.tif'
+dst='source_alpha_nodata.tif'
+with rasterio.open(src) as s:
+   profile=s.profile.copy()
+   data=s.read()
+R,G,B,A = data[0], data[1], data[2], data[3]
+mask = (R==0)&(G==0)&(B==0)
+A[mask]=0
+with rasterio.open(dst, 'w', **profile) as d:
+   d.write(np.vstack([R[np.newaxis],G[np.newaxis],B[np.newaxis],A[np.newaxis]]))
+print('wrote', dst)
+PY
+```
+
+4. Convert the prepared alpha-enabled TIFF to PMTiles using the `shin-freetown` recommended parameters (example):
+
+```bash
+export OMP_NUM_THREADS=1 GDAL_CACHEMAX=512
+PATH=/Users/hfu/.local/share/mamba/envs/shin-freetown/bin:$PATH \
+  rio pmtiles source_alpha_nodata.tif output.pmtiles \
+   -j 1 --exclude-empty-tiles -f WEBP --tile-size 512 --resampling bilinear \
+   --rgba --name "Title" --attribution "Attribution" \
+   --description "Description" --zoom-levels 10..21 --co QUALITY=75
+```
+
+Notes and tips:
+- If your TIFF already has a valid NODATA value, you can skip step 2/3 and use `--rgba` or `-a_nodata` to preserve transparency.
+- The `gdalwarp -dstalpha` step adds an explicit alpha band (increasing file size) but makes transparency handling robust across downstream tools.
+- For very large imagery, prefer testing the workflow on a small clip (see repository tests) before running the full conversion.
+
+This repository contains helper `just` tasks (`download` and `convert`) that follow the workflow above. See the `Justfile` for defaults and environment-variable-driven configuration.
 
 ### Why /vsicurl?
 
