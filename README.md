@@ -4,7 +4,7 @@ A streamlined tool to convert GeoTIFF imagery from OpenAerialMap to lossy WebP P
 
 ## Features
 
-- Convert remote GeoTIFF to PMTiles using `/vsicurl` (no local download required)
+- Convert GeoTIFF to PMTiles (local download preferred). GDAL's `/vsicurl` was tested, but we currently download source files locally for improved performance and reliability.
 - Generate lossy WebP format for efficient web delivery
 - Preserve metadata including attribution and licensing information
 - Simple task-based workflow using Justfile
