@@ -126,6 +126,30 @@ The following table shows how OpenAerialMap metadata maps to PMTiles metadata:
 - **Min Zoom**: 10
 - **Max Zoom**: 22
 
+### Operational notes (logs, big TIFFs, and recommended defaults)
+
+- `add-alpha` (the step that creates an alpha-enabled TIFF) can produce very large files. The `Justfile` now uses the following conservative defaults to reduce failures on large imagery:
+   - `GDAL_CACHEMAX=2048` (MB)
+   - `QUALITY=65` (WebP lossy quality)
+   - `RIO_JOBS=1` (single-worker `rio pmtiles` by default)
+
+- For very large TIFFs the `add-alpha` step creates a BigTIFF to avoid "TIFFAppendToStrip: Maximum TIFF file size exceeded" errors. This uses `-co BIGTIFF=YES -co TILED=YES -co COMPRESS=DEFLATE -co PREDICTOR=2` when calling `gdalwarp`.
+
+- If you want to see detailed GDAL progress and internal messages while `add-alpha` is running, the Justfile enables GDAL debug output by default (prints to stderr). To override or silence it, set the environment variable `CPL_DEBUG` before running the task. Example (prints debug to stderr):
+
+```bash
+# run add-alpha with debug output (printed to stderr)
+CPL_DEBUG=ON just add-alpha
+```
+
+- Once `add-alpha` has completed and you've verified the alpha-enabled TIFF, run the conversion with the conservative defaults above. Example:
+
+```bash
+# conservative production run (after add-alpha completes)
+OMP_NUM_THREADS=1 GDAL_CACHEMAX=2048 RIO_JOBS=1 QUALITY=65 just convert
+```
+
+
 ### NODATA Handling
 
 NODATA in aerial imagery can be expressed in several ways (explicit NODATA value, dataset mask, or pixels with RGB == 0). If NODATA is not handled explicitly, it commonly appears as black pixels in generated tiles. The recommended, tested workflow used in this repository is:
