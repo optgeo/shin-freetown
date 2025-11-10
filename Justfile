@@ -45,7 +45,7 @@ convert-clip:
     export GDAL_CACHEMAX=${GDAL_CACHEMAX:-{{ gdal_cachemax }}}
     export RIO_JOBS=${RIO_JOBS:-{{ rio_jobs }}}
 
-    rio pmtiles "$CLIP_TIF" "$CLIP_OUTPUT" -j ${RIO_JOBS} \
+    rio -v pmtiles "$CLIP_TIF" "$CLIP_OUTPUT" -j ${RIO_JOBS} \
         --exclude-empty-tiles -f {{ tile_format }} --tile-size {{ tile_size }} --resampling {{ resampling }} --rgba \
         --name "{{ title }}-clip" --attribution "{{ attribution }}" \
         --description "{{ description }} | clip test | license={{ license }} | oin_id={{ oin_id }}" \
@@ -179,7 +179,7 @@ convert: add-alpha
     # If user has micromamba and the 'shin-freetown' env, prefer that; otherwise use system `rio`.
     if command -v micromamba >/dev/null 2>&1 && ~/micromamba/micromamba info --envs >/dev/null 2>&1 2>/dev/null; then
         echo "Using micromamba environment 'shin-freetown' to run rio pmtiles"
-        ~/micromamba/micromamba run -n shin-freetown rio pmtiles \
+        ~/micromamba/micromamba run -n shin-freetown rio -v pmtiles \
             "$conv_src" \
             "{{ output_path }}" \
             -j ${RIO_JOBS} \
@@ -195,8 +195,9 @@ convert: add-alpha
             --zoom-levels {{ zoom_range }} \
             --co QUALITY={{ quality }}
     else
-        rio pmtiles \
+        rio -v pmtiles \
             "$conv_src" \
+            \
             "{{ output_path }}" \
             -j ${RIO_JOBS} \
             --exclude-empty-tiles \
