@@ -1,0 +1,14 @@
+# Python dependencies for shin-freetown terrain tile pipeline
+# Install with: pip install -r requirements.txt
+
+# Core raster processing
+rasterio>=1.3.0
+numpy>=1.21.0
+
+# Tile generation and encoding
+mercantile>=1.2.0
+imagecodecs>=2023.1.0
+pmtiles>=3.0.0
+
+# Optional: for development
+# pytest>=7.0.0

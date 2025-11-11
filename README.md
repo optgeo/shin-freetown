@@ -1,19 +1,41 @@
 # shin-freetown
 
-A streamlined tool to convert GeoTIFF imagery from OpenAerialMap to lossy WebP PMTiles format. This project is a simplified version of [shin-abidjan](https://github.com/optgeo/shin-abidjan), using the `just` task runner as a homage to the mapterhorn project.
+A streamlined tool to convert GeoTIFF elevation data to Terrarium-encoded PMTiles for terrain visualization. This project follows the [mapterhorn](https://github.com/mapterhorn/mapterhorn) methodology for terrain tile generation.
+
+## Overview
+
+shin-freetown implements a 2-stage pipeline for processing elevation data:
+
+1. **Stage 1: Bounds Generation** - Extract bounding box information (EPSG:3857) and metadata from source GeoTIFFs
+2. **Stage 2: Tile Processing** - Cut elevation data into 512×512 tiles, apply Terrarium encoding, save as lossless WebP, and bundle into PMTiles
 
 ## Features
 
-- Convert GeoTIFF to PMTiles (local download preferred). GDAL's `/vsicurl` was tested, but we currently download source files locally for improved performance and reliability.
-- Generate lossy WebP format for efficient web delivery
-- Preserve metadata including attribution and licensing information
-- Simple task-based workflow using Justfile
+- **Terrarium RGB Encoding**: Industry-standard encoding for terrain visualization
+  - Elevation formula: `elevation = (R × 256 + G + B / 256) - 32768`
+  - Supports elevation range: -32,768m to +32,768m
+  - Zoom-dependent vertical resolution (3.9mm at z19, 2048m at z0)
+  
+- **Lossless WebP Tiles**: Efficient storage with perfect reproduction of elevation data
+
+- **EPSG:3857 (Web Mercator)**: Standard coordinate system for web mapping
+
+- **Simple Task-Based Workflow**: Uses `just` task runner following mapterhorn convention
 
 ## Prerequisites
 
 - [just](https://github.com/casey/just) - Command runner
-- [rio-pmtiles](https://github.com/developmentseed/rio-pmtiles) - Rasterio plugin for PMTiles generation
-- GDAL with /vsicurl support (usually included with rasterio)
+- Python 3.8+ with the following packages:
+  - rasterio
+  - numpy
+  - mercantile
+  - imagecodecs
+  - pmtiles
+
+Install Python dependencies:
+```bash
+pip install -r requirements.txt
+```
 
 ## Installation
 
@@ -27,200 +49,144 @@ A streamlined tool to convert GeoTIFF imagery from OpenAerialMap to lossy WebP P
    # or use your package manager
    ```
 
-2. Install `rio-pmtiles`:
+2. Install Python dependencies:
    ```bash
-   pip install rio-pmtiles
+   pip install -r requirements.txt
    ```
 
 ## Usage
 
-### Basic Usage
+### Stage 1: Generate Bounds CSV
 
-Convert the default Freetown imagery:
+Prepare your source data by placing GeoTIFF elevation files in a source directory:
 
 ```bash
-just go
+# Create source directory
+mkdir -p source-store/freetown
+
+# Place your elevation GeoTIFF files in source-store/freetown/
+
+# Generate bounds.csv with bounding box info
+just bounds freetown
 ```
 
-### Advanced Configuration
+This creates `source-store/freetown/bounds.csv` containing:
+- filename: Name of each GeoTIFF
+- left, bottom, right, top: Bounding box in EPSG:3857
+- width, height: Raster dimensions in pixels
+
+### Stage 2: Process Tiles (To Be Implemented)
+
+The full tile cutting and encoding pipeline is planned for implementation:
+
+```bash
+just process freetown
+```
+
+This will:
+1. Read bounds.csv to determine tile coverage
+2. Cut 512×512 elevation data from source GeoTIFFs  
+3. Reproject to EPSG:3857 if needed
+4. Apply Terrarium encoding with zoom-dependent vertical rounding
+5. Save as lossless WebP tiles
+6. Bundle into PMTiles archive
+
+### Configuration
 
 All settings can be customized via environment variables:
 
 ```bash
 # Custom source and output
-SOURCE_URL="https://example.com/image.tif" \
-OUTPUT_PATH="my_output.pmtiles" \
-just go
+SOURCE_NAME="my_dem" OUTPUT_PATH="terrain.pmtiles" just process
 
-# Full metadata customization
-TITLE="My Image" \
-ATTRIBUTION="My Organization (Jane Doe)" \
-LICENSE="CC BY 4.0" \
-DESCRIPTION="Custom description" \
-just go
+# Custom zoom range
+MIN_ZOOM=8 MAX_ZOOM=15 just process
 ```
 
 ### Available Tasks
 
 - `just` or `just --list` - Show all available tasks
-- `just go` - Run the GeoTIFF to PMTiles conversion
+- `just bounds <source>` - Generate bounds.csv for a source
+- `just process <source>` - Process elevation data to PMTiles (WIP)
 - `just config` - Display current configuration
-- `just clean` - Remove output files
-
-## Default Dataset
-
-By default, this tool processes aerial imagery of Freetown, Sierra Leone:
-
-- **Source**: [OpenAerialMap](https://map.openaerialmap.org/#/-13.252730369567871,8.469316086049092,14/square/0333211232230201/69075f1de47603686de24fe8?_k=h4j55o)
-- **Title**: Freetown_Main_body
-- **Uploaded by**: Ivan Gayton
-- **Date**: 2025-04-16
-- **Resolution**: 4cm
-- **Provider**: HOT (Humanitarian OpenStreetMap Team)
-- **Platform**: UAV
-- **Sensor**: DJI Mini 4 Pro With DroneTM
-- **Image Size**: 9.82GB
-- **Type**: Image + Map Layer
-- **License**: CC BY-SA 4.0
-- **OIN ID**: 68bed3070dea6f775adb9b06
-
-## Metadata Mapping
-
-The following table shows how OpenAerialMap metadata maps to PMTiles metadata:
-
-| OpenAerialMap Field | Environment Variable | PMTiles Field | Usage |
-|---------------------|---------------------|---------------|-------|
-| title | `TITLE` | `--title` | Main tile title |
-| provider (uploaded by) | `ATTRIBUTION` | `--attribution` | "HOT (Ivan Gayton)" - Displayed in map attribution |
-| license | `LICENSE` | `--pmtiles-metadata "license=..."` | "CC BY-SA 4.0" - Critical licensing information |
-| date / resolution / platform / sensor | `DESCRIPTION` | `--description` | Combined technical details |
-| id | `OIN_ID` | `--pmtiles-metadata "oin_id=..."` | OpenAerialMap reference (for advanced use) |
-
-### Important Metadata Notes
-
-- **Attribution**: Prominently displayed as "HOT (Ivan Gayton)" to credit the data provider and uploader
-- **License**: The CC BY-SA 4.0 license is explicitly embedded in the PMTiles metadata - this is critical for legal compliance
-- **OIN ID**: Stored as supplementary metadata for traceability but not prominently displayed
-- **Description**: Contains technical details (resolution, date, platform, sensor) for reference
-
-## Configuration Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SOURCE_URL` | Freetown imagery URL | Source GeoTIFF URL (accessed via /vsicurl) |
-| `OUTPUT_PATH` | `freetown_main_body.pmtiles` | Output PMTiles file path |
-| `TITLE` | `Freetown_Main_body` | Tileset title |
-| `ATTRIBUTION` | `HOT (Ivan Gayton)` | Attribution text for map display |
-| `LICENSE` | `CC BY-SA 4.0` | License identifier |
-| `DESCRIPTION` | (Full technical details) | Detailed description of the imagery |
-| `OIN_ID` | `68bed3070dea6f775adb9b06` | OpenAerialMap unique identifier |
+- `just clean` - Remove temporary files
+- `just clean-all` - Remove all generated files
+- `just example-bounds` - Show usage example
+- `just test-utils` - Test Python dependencies
 
 ## Technical Details
 
-### Conversion Parameters
+### Terrarium Encoding
 
-- **Encoding**: WebP (lossy compression)
-- **Quality**: 75 (good balance of size and quality)
-- **Resampling**: Bilinear
-- **Alpha Channel**: Enabled (converts NODATA to transparent pixels)
-- **Min Zoom**: 10
-- **Max Zoom**: 22
+Terrarium encoding stores elevation in RGB channels with zoom-dependent precision:
 
-### Operational notes (logs, big TIFFs, and recommended defaults)
+| Zoom | Pixel Size (3857) | Vertical Resolution |
+|------|-------------------|---------------------|
+| 0    | 78.3 km          | 2048 m             |
+| 5    | 2.45 km          | 64 m               |
+| 10   | 76.4 m           | 2 m                |
+| 15   | 2.39 m           | 6.3 cm             |
+| 19   | 0.149 m          | 3.9 mm             |
 
-- `add-alpha` (the step that creates an alpha-enabled TIFF) can produce very large files. The `Justfile` now uses the following conservative defaults to reduce failures on large imagery:
-   - `GDAL_CACHEMAX=2048` (MB)
-   - `QUALITY=65` (WebP lossy quality)
-   - `RIO_JOBS=1` (single-worker `rio pmtiles` by default)
+The encoding uses:
+- **Red channel**: High byte (elevation // 256)
+- **Green channel**: Low byte (elevation % 256)
+- **Blue channel**: Fractional part ((elevation - floor(elevation)) × 256)
 
-- For very large TIFFs the `add-alpha` step creates a BigTIFF to avoid "TIFFAppendToStrip: Maximum TIFF file size exceeded" errors. This uses `-co BIGTIFF=YES -co TILED=YES -co COMPRESS=DEFLATE -co PREDICTOR=2` when calling `gdalwarp`.
+### Vertical Rounding
 
-- If you want to see detailed GDAL progress and internal messages while `add-alpha` is running, the Justfile enables GDAL debug output by default (prints to stderr). To override or silence it, set the environment variable `CPL_DEBUG` before running the task. Example (prints debug to stderr):
+Following mapterhorn methodology, vertical resolution is rounded at lower zoom levels:
 
-```bash
-# run add-alpha with debug output (printed to stderr)
-CPL_DEBUG=ON just add-alpha
+```python
+factor = 2 ** (19 - z) / 256
+rounded_elevation = round(elevation / factor) * factor
 ```
 
-- Once `add-alpha` has completed and you've verified the alpha-enabled TIFF, run the conversion with the conservative defaults above. Example:
+This optimizes tile size while maintaining appropriate precision for each zoom level.
 
-```bash
-# conservative production run (after add-alpha completes)
-OMP_NUM_THREADS=1 GDAL_CACHEMAX=2048 RIO_JOBS=1 QUALITY=65 just convert
+### Tile Format
+
+- **Size**: 512×512 pixels (standard for terrain tiles)
+- **Format**: Lossless WebP (smaller than PNG, maintains exact elevation values)
+- **Coordinate System**: EPSG:3857 (Web Mercator)
+- **Archive Format**: PMTiles (cloud-optimized single-file archive)
+
+## Project Structure
+
+```
+shin-freetown/
+├── utils.py              # Terrain encoding utilities (save_terrarium_tile, create_archive)
+├── source_bounds.py      # Bounds CSV generation
+├── Justfile              # Task definitions
+├── requirements.txt      # Python dependencies
+├── README.md            # This file
+└── source-store/        # Source GeoTIFF data (gitignored)
+    └── {source}/
+        ├── *.tif        # Elevation GeoTIFFs
+        └── bounds.csv   # Generated metadata
 ```
 
+## Comparison with Mapterhorn
 
-### NODATA Handling
+This project is inspired by [mapterhorn](https://github.com/mapterhorn/mapterhorn) but simplified:
 
-NODATA in aerial imagery can be expressed in several ways (explicit NODATA value, dataset mask, or pixels with RGB == 0). If NODATA is not handled explicitly, it commonly appears as black pixels in generated tiles. The recommended, tested workflow used in this repository is:
+- **Mapterhorn**: Full planetary-scale pipeline with aggregation, downsampling, and bundling
+- **shin-freetown**: Streamlined for smaller regions with essential terrain encoding features
 
-1. Inspect the source TIFF for NODATA or a dataset mask:
-
-```bash
-gdalinfo source.tif
-```
-
-2. If the dataset has a dataset mask (Mask Flags: PER_DATASET) or NODATA is unspecified but black pixels indicate background, create an explicit alpha band from the mask:
-
-```bash
-# create alpha from dataset mask
-gdalwarp -dstalpha source.tif source_alpha.tif
-```
-
-3. If the image uses black RGB (0,0,0) pixels to indicate background, convert those pixels to fully transparent by setting alpha=0 where R=G=B=0. Example (uses the `rasterio` Python package available in the `shin-freetown` environment):
-
-```bash
-/Users/hfu/.local/share/mamba/envs/shin-freetown/bin/python - <<'PY'
-import rasterio, numpy as np
-src='source_alpha.tif'
-dst='source_alpha_nodata.tif'
-with rasterio.open(src) as s:
-   profile=s.profile.copy()
-   data=s.read()
-R,G,B,A = data[0], data[1], data[2], data[3]
-mask = (R==0)&(G==0)&(B==0)
-A[mask]=0
-with rasterio.open(dst, 'w', **profile) as d:
-   d.write(np.vstack([R[np.newaxis],G[np.newaxis],B[np.newaxis],A[np.newaxis]]))
-print('wrote', dst)
-PY
-```
-
-Note: The repository's `add-alpha` task now runs `gdalwarp` with `-srcnodata "0 0 0"` by default, so pure-black pixels are converted to transparent automatically. If your source uses near-black values as background (not exact 0,0,0), use the `rasterio` threshold example above for more robust handling.
-
-4. Convert the prepared alpha-enabled TIFF to PMTiles using the `shin-freetown` recommended parameters (example):
-
-```bash
-export OMP_NUM_THREADS=1 GDAL_CACHEMAX=512
-PATH=/Users/hfu/.local/share/mamba/envs/shin-freetown/bin:$PATH \
-  rio pmtiles source_alpha_nodata.tif output.pmtiles \
-   -j 1 --exclude-empty-tiles -f WEBP --tile-size 512 --resampling bilinear \
-   --rgba --name "Title" --attribution "Attribution" \
-   --description "Description" --zoom-levels 10..21 --co QUALITY=75
-```
-
-Notes and tips:
-- If your TIFF already has a valid NODATA value, you can skip step 2/3 and use `--rgba` or `-a_nodata` to preserve transparency.
-- The `gdalwarp -dstalpha` step adds an explicit alpha band (increasing file size) but makes transparency handling robust across downstream tools.
-- For very large imagery, prefer testing the workflow on a small clip (see repository tests) before running the full conversion.
-
-This repository contains helper `just` tasks (`download` and `convert`) that follow the workflow above. See the `Justfile` for defaults and environment-variable-driven configuration.
-
-### Why /vsicurl?
-
-The tool uses GDAL's `/vsicurl` virtual file system to access remote GeoTIFF files directly without downloading them first. This:
-- Saves local disk space
-- Reduces processing time
-- Works seamlessly with rio-pmtiles
-
-## License
-
-This project (the conversion tool itself) is licensed under CC0 1.0 Universal. See [LICENSE](LICENSE) for details.
-
-**Note**: The output data inherits the license of the source imagery. For the default Freetown dataset, the output is licensed under CC BY-SA 4.0 as specified in the source metadata.
+Key similarities:
+- Terrarium RGB encoding with zoom-dependent vertical rounding
+- Lossless WebP tile format  
+- PMTiles output format
+- Bounds CSV for spatial metadata
 
 ## Related Projects
 
-- [shin-abidjan](https://github.com/optgeo/shin-abidjan) - Previous version using Makefile and shell scripts
-- [mapterhorn](https://github.com/felt/mapterhorn) - Inspiration for using just as task runner
-- [rio-pmtiles](https://github.com/developmentseed/rio-pmtiles) - The core conversion tool
+- [mapterhorn](https://github.com/mapterhorn/mapterhorn) - Full-featured terrain tile pipeline
+- [Protomaps](https://protomaps.com) - PMTiles format and cloud-optimized mapping
+- [rio-rgbify](https://github.com/mapbox/rio-rgbify) - Alternative terrain encoding tool
+
+## License
+
+This project is licensed under CC0 1.0 Universal. See [LICENSE](LICENSE) for details.
+
+**Note**: The output terrain data inherits the license of your source elevation data.

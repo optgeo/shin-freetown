@@ -1,9 +1,15 @@
 # Temporary files
 tmp/
 *.tmp
+.tmp/
 
 # PMTiles output
 *.pmtiles
+
+# Source and data directories
+source-store/
+*.tif
+*.csv
 
 # Python
 __pycache__/
