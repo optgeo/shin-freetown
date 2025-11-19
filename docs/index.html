@@ -154,6 +154,9 @@
   </div>
 
   <script>
+    // Protomaps TileJSON URL (tunnel with fallback to official API)
+    const PROTOMAPS_TILEJSON_URL = 'https://tunnel.optgeo.org/martin/protomaps-basemap';
+
     // Initialize the map
     const map = new maplibregl.Map({
       container: 'map',
@@ -230,8 +233,17 @@
           }
         });
 
-        // Add Protomaps basemap annotations
-        await addProtomapsOverlay('https://api.protomaps.com/tiles/v4.json');
+        // Overlay vector basemap labels from Protomaps. Try tunnel first, fall back to official API.
+        try {
+          await addProtomapsOverlay(PROTOMAPS_TILEJSON_URL);
+        } catch (overlayErr) {
+          console.warn('Protomaps overlay (tunnel) failed, falling back to official API:', overlayErr);
+          try {
+            await addProtomapsOverlay('https://api.protomaps.com/tiles/v4.json');
+          } catch (fallbackErr) {
+            console.error('Both Protomaps overlay attempts failed:', fallbackErr);
+          }
+        }
         
         console.log('Map and overlays loaded successfully');
       } catch (error) {
