@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Freetown Aerial Imagery</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css">
+  <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      overflow: hidden;
+    }
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+    .info-panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      max-width: 360px;
+      z-index: 1;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .info-panel.minimized {
+      max-height: 50px;
+    }
+    .info-panel.expanded {
+      max-height: 600px;
+    }
+    .panel-header {
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e0e0e0;
+      background: #f8f8f8;
+    }
+    .panel-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+    .toggle-icon {
+      font-size: 20px;
+      color: #666;
+      user-select: none;
+      transition: transform 0.3s ease;
+    }
+    .info-panel.expanded .toggle-icon {
+      transform: rotate(180deg);
+    }
+    .panel-content {
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333;
+    }
+    .panel-content h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 12px 0 6px 0;
+      color: #333;
+    }
+    .panel-content h3:first-child {
+      margin-top: 0;
+    }
+    .panel-content p {
+      margin: 6px 0;
+    }
+    .panel-content a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+    .panel-content a:hover {
+      text-decoration: underline;
+    }
+    .tile-url {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      background: #f5f5f5;
+      padding: 8px;
+      border-radius: 4px;
+      word-break: break-all;
+      margin: 6px 0;
+    }
+    .acknowledgments {
+      font-size: 13px;
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+    }
+    .acknowledgments ul {
+      list-style: none;
+      padding: 0;
+      margin: 6px 0;
+    }
+    .acknowledgments li {
+      margin: 4px 0;
+    }
+    @media (max-width: 480px) {
+      .info-panel {
+        max-width: calc(100vw - 20px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  
+  <div class="info-panel minimized" id="infoPanel">
+    <div class="panel-header" id="panelToggle">
+      <h2>Freetown Aerial Imagery</h2>
+      <span class="toggle-icon">▼</span>
+    </div>
+    <div class="panel-content">
+      <h3>About this Map</h3>
+      <p>This map displays high-resolution aerial imagery of Freetown, Sierra Leone, captured in April 2025 with 4cm resolution using UAV (DJI Mini 4 Pro).</p>
+      
+      <h3>Tile Source</h3>
+      <div class="tile-url">https://tunnel.optgeo.org/martin/freetown_2025-10-22_nearest</div>
+      
+      <h3>Data Attribution</h3>
+      <p>Imagery provided by <strong>HOT (Humanitarian OpenStreetMap Team)</strong>, uploaded by <strong>Ivan Gayton</strong>. Licensed under <strong>CC BY-SA 4.0</strong>.</p>
+      
+      <h3>Source Code</h3>
+      <p>View the project on GitHub: <a href="https://github.com/optgeo/shin-freetown" target="_blank" rel="noopener">optgeo/shin-freetown</a></p>
+      
+      <div class="acknowledgments">
+        <h3>Built with Open Source</h3>
+        <ul>
+          <li><a href="https://maplibre.org/" target="_blank" rel="noopener">MapLibre GL JS</a> - Open-source mapping library</li>
+          <li><a href="https://openaerialmap.org/" target="_blank" rel="noopener">OpenAerialMap</a> - Open imagery repository</li>
+          <li><a href="https://martin.maplibre.org/" target="_blank" rel="noopener">Martin</a> - Tile server</li>
+          <li><a href="https://protomaps.com/" target="_blank" rel="noopener">Protomaps</a> - Vector basemap tiles</li>
+          <li><a href="https://github.com/developmentseed/rio-pmtiles" target="_blank" rel="noopener">rio-pmtiles</a> - Conversion tool</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize the map
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: {
+        version: 8,
+        sources: {},
+        layers: []
+      },
+      center: [-13.2343, 8.4657], // Freetown coordinates
+      zoom: 13,
+      hash: true
+    });
+
+    // Add navigation controls
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+    // Add geolocation control for city users
+    map.addControl(
+      new maplibregl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true
+        },
+        trackUserLocation: true,
+        showUserHeading: true
+      }),
+      'top-right'
+    );
+
+    // Add scale control
+    map.addControl(new maplibregl.ScaleControl(), 'bottom-right');
+
+    // Panel toggle functionality
+    const panel = document.getElementById('infoPanel');
+    const toggle = document.getElementById('panelToggle');
+    
+    toggle.addEventListener('click', () => {
+      panel.classList.toggle('minimized');
+      panel.classList.toggle('expanded');
+    });
+
+    // Detect if user is on mobile and keep panel minimized by default
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    if (!isMobile) {
+      // Expand panel on desktop by default
+      panel.classList.remove('minimized');
+      panel.classList.add('expanded');
+    }
+
+    // Load the aerial imagery and annotations
+    map.on('load', async () => {
+      try {
+        // Add the aerial imagery from Martin
+        const tileJsonUrl = 'https://tunnel.optgeo.org/martin/freetown_2025-10-22_nearest';
+        const tileJsonResponse = await fetch(tileJsonUrl);
+        const tileJson = await tileJsonResponse.json();
+
+        // Add raster source
+        map.addSource('freetown-imagery', {
+          type: 'raster',
+          tiles: tileJson.tiles,
+          tileSize: tileJson.tileSize || 256,
+          attribution: tileJson.attribution || 'HOT (Ivan Gayton)',
+          minzoom: tileJson.minzoom || 0,
+          maxzoom: tileJson.maxzoom || 22
+        });
+
+        // Add raster layer
+        map.addLayer({
+          id: 'freetown-imagery-layer',
+          type: 'raster',
+          source: 'freetown-imagery',
+          paint: {
+            'raster-opacity': 1
+          }
+        });
+
+        // Add Protomaps basemap annotations
+        await addProtomapsOverlay('https://api.protomaps.com/tiles/v4.json');
+        
+        console.log('Map and overlays loaded successfully');
+      } catch (error) {
+        console.error('Error loading map tiles:', error);
+      }
+    });
+
+    // Protomaps overlay for place names and POI labels
+    async function addProtomapsOverlay(tilejsonUrl) {
+      const sourceId = 'protomaps-overlay';
+      const overlayLayerIds = ['proto-place-labels', 'proto-poi-labels'];
+
+      try {
+        console.log('[overlay] Fetching TileJSON:', tilejsonUrl);
+        const response = await fetch(tilejsonUrl);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const tileJson = await response.json();
+
+        // Remove existing overlay layers if present
+        overlayLayerIds.forEach(layerId => {
+          if (map.getLayer(layerId)) {
+            try {
+              map.removeLayer(layerId);
+            } catch (e) {
+              console.warn(`Failed to remove layer ${layerId}:`, e);
+            }
+          }
+        });
+        if (map.getSource(sourceId)) {
+          map.removeSource(sourceId);
+        }
+
+        // Define the source
+        const hasTiles = tileJson && Array.isArray(tileJson.tiles) && tileJson.tiles.length > 0;
+        const sourceDef = hasTiles
+          ? {
+              type: 'vector',
+              tiles: tileJson.tiles,
+              minzoom: typeof tileJson.minzoom === 'number' ? tileJson.minzoom : 0,
+              maxzoom: typeof tileJson.maxzoom === 'number' ? tileJson.maxzoom : 22
+            }
+          : { type: 'vector', url: tilejsonUrl };
+
+        if (typeof tileJson?.attribution === 'string' && tileJson.attribution.trim()) {
+          sourceDef.attribution = tileJson.attribution;
+        }
+
+        map.addSource(sourceId, sourceDef);
+        console.log('[overlay] Source added:', sourceId);
+
+        // Find relevant layers in the vector tile
+        const vectorLayers = Array.isArray(tileJson.vector_layers) ? tileJson.vector_layers : [];
+        const findLayerId = (keywords) => {
+          const lower = (s) => (s || '').toLowerCase();
+          const hit = vectorLayers.find(l => keywords.some(k => lower(l.id).includes(k)));
+          return hit && hit.id;
+        };
+
+        const lyrPlaces = findLayerId(['place', 'places', 'label']);
+        const lyrPoi = findLayerId(['poi', 'pois', 'amenity']);
+        console.log('[overlay] Detected layers:', { lyrPlaces, lyrPoi });
+
+        // Add place labels (for lower zoom levels)
+        if (lyrPlaces) {
+          try {
+            map.addLayer({
+              id: 'proto-place-labels',
+              type: 'symbol',
+              source: sourceId,
+              'source-layer': lyrPlaces,
+              layout: {
+                'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
+                'text-size': ['interpolate', ['linear'], ['zoom'], 5, 9, 8, 11, 12, 13, 14, 15],
+                'text-allow-overlap': false,
+                'visibility': 'visible'
+              },
+              paint: {
+                'text-color': '#ffffff',
+                'text-halo-color': 'rgba(0, 0, 0, 0.85)',
+                'text-halo-width': 1.2
+              },
+              minzoom: 5,
+              maxzoom: 15
+            });
+            console.log('[overlay] Layer added: proto-place-labels');
+          } catch (e) {
+            console.warn('Failed to add place labels:', e);
+          }
+        }
+
+        // Add POI labels (for higher zoom levels)
+        if (lyrPoi) {
+          try {
+            map.addLayer({
+              id: 'proto-poi-labels',
+              type: 'symbol',
+              source: sourceId,
+              'source-layer': lyrPoi,
+              layout: {
+                'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
+                'text-size': ['interpolate', ['linear'], ['zoom'], 16, 10, 18, 12, 20, 14],
+                'text-allow-overlap': false,
+                'visibility': 'visible'
+              },
+              paint: {
+                'text-color': '#eeeeee',
+                'text-halo-color': 'rgba(0, 0, 0, 0.9)',
+                'text-halo-width': 1.2
+              },
+              minzoom: 14
+            });
+            console.log('[overlay] Layer added: proto-poi-labels');
+          } catch (e) {
+            console.warn('Failed to add POI labels:', e);
+          }
+        }
+      } catch (error) {
+        console.warn('Protomaps overlay load failed:', error);
+      }
+    }
+  </script>
+</body>
+</html>
