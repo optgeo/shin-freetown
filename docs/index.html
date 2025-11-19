@@ -362,6 +362,7 @@
         }
       } catch (error) {
         console.warn('Protomaps overlay load failed:', error);
+        throw error; // Re-throw to allow fallback logic to work
       }
     }
   </script>
