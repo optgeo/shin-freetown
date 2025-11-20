@@ -147,6 +147,7 @@
           <li><a href="https://openaerialmap.org/" target="_blank" rel="noopener">OpenAerialMap</a> - Open imagery repository</li>
           <li><a href="https://martin.maplibre.org/" target="_blank" rel="noopener">Martin</a> - Tile server</li>
           <li><a href="https://protomaps.com/" target="_blank" rel="noopener">Protomaps</a> - Vector basemap tiles</li>
+          <li><a href="https://github.com/felt/mapterhorn" target="_blank" rel="noopener">Mapterhorn</a> - 3D terrain tiles</li>
           <li><a href="https://github.com/developmentseed/rio-pmtiles" target="_blank" rel="noopener">rio-pmtiles</a> - Conversion tool</li>
         </ul>
       </div>
@@ -188,6 +189,12 @@
     // Add scale control
     map.addControl(new maplibregl.ScaleControl(), 'bottom-right');
 
+    // Add terrain control for 3D visualization
+    map.addControl(new maplibregl.TerrainControl({
+      source: 'mapterhorn-terrain',
+      exaggeration: 1.5
+    }), 'top-right');
+
     // Panel toggle functionality
     const panel = document.getElementById('infoPanel');
     const toggle = document.getElementById('panelToggle');
@@ -208,6 +215,20 @@
     // Load the aerial imagery and annotations
     map.on('load', async () => {
       try {
+        // Add Mapterhorn terrain source
+        const terrainTileJsonUrl = 'https://tunnel.optgeo.org/martin/mapterhorn';
+        const terrainResponse = await fetch(terrainTileJsonUrl);
+        const terrainTileJson = await terrainResponse.json();
+        
+        map.addSource('mapterhorn-terrain', {
+          type: 'raster-dem',
+          tiles: terrainTileJson.tiles,
+          tileSize: terrainTileJson.tileSize || 256,
+          minzoom: terrainTileJson.minzoom || 0,
+          maxzoom: terrainTileJson.maxzoom || 22,
+          attribution: terrainTileJson.attribution || ''
+        });
+
         // Add the aerial imagery from Martin
         const tileJsonUrl = 'https://tunnel.optgeo.org/martin/freetown_2025-10-22_nearest';
         const tileJsonResponse = await fetch(tileJsonUrl);
